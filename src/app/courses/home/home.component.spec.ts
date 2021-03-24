@@ -1,4 +1,4 @@
-import {async, ComponentFixture, fakeAsync, flush, flushMicrotasks, TestBed} from '@angular/core/testing';
+import {async, ComponentFixture, fakeAsync, flush, flushMicrotasks, TestBed, waitForAsync} from '@angular/core/testing';
 import {CoursesModule} from '../courses.module';
 import {DebugElement} from '@angular/core';
 
@@ -21,9 +21,29 @@ describe('HomeComponent', () => {
   let fixture: ComponentFixture<HomeComponent>;
   let component:HomeComponent;
   let el: DebugElement;
+  let coursesService: any;
 
-  beforeEach((() => {
+  const beginnerCourses = setupCourses().filter(course => course.category === 'BEGINNER');
 
+  beforeEach(waitForAsync(() => {
+    const coursesServiceSpy = jasmine.createSpyObj('CoursesService', ['findAllCourses']);
+
+    TestBed.configureTestingModule({
+      imports: [
+        CoursesModule,
+        NoopAnimationsModule,
+      ],
+      providers: [ 
+        { provide: CoursesService, useValue: coursesServiceSpy }
+      ]
+    })
+      .compileComponents()
+      .then(() => {
+        fixture = TestBed.createComponent(HomeComponent);
+        component = fixture.componentInstance;
+        el = fixture.debugElement;
+        coursesService = TestBed.inject(CoursesService);
+      });
 
   }));
 
@@ -36,7 +56,11 @@ describe('HomeComponent', () => {
 
   it("should display only beginner courses", () => {
 
-    pending();
+    coursesService.findAllCourses.and.returnValue(of(beginnerCourses));
+    fixture.detectChanges();
+
+    const tabs = el.queryAll(By.css(".mat-tab-label"));
+    expect(tabs.length).toBe(1, "Unexpected number of tabs");
 
   });
 
@@ -57,7 +81,9 @@ describe('HomeComponent', () => {
 
   it("should display advanced courses when tab clicked", () => {
 
-    pending();
+    coursesService.findAllCourses.and.returnValue(of(setupCourses()));
+    fixture.detectChanges();
+    
 
   });
 
